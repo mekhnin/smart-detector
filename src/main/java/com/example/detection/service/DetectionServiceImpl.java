@@ -1,5 +1,6 @@
 package com.example.detection.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.opencv.core.Core;
@@ -15,14 +16,16 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-
-import java.util.LinkedList;
-import java.util.List;
-
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+import lombok.extern.slf4j.Slf4j;
+import lombok.SneakyThrows;
+
+import java.util.Arrays;
 
 import static org.opencv.imgcodecs.Imgcodecs.IMREAD_GRAYSCALE;
 
@@ -32,26 +35,26 @@ public class DetectionServiceImpl implements DetectionService {
 
     private final Scalar rectangleColor;
     private final int imageSize;
-    private final String decompositionHost;
-    private final String decompositionPort;
+    private final String noiseReductionHost;
+    private final String noiseReductionPort;
     private final CascadeClassifier faceDetector;
     private final RestTemplate restTemplate;
 
     public DetectionServiceImpl(RestTemplateBuilder restTemplateBuilder,
                                 @Value("${detection-service.image-size:640}") int imageSize,
-                                @Value("${detection-service.decomposition-server.host}") String decompositionHost,
-                                @Value("${detection-service.decomposition-server.port}") String decompositionPort,
+                                @Value("${detection-service.noise-reduction-server.host}") String noiseReductionHost,
+                                @Value("${detection-service.noise-reduction-server.port}") String noiseReductionPort,
                                 @Value("${detection-service.cascade}") String cascade) {
         restTemplate = restTemplateBuilder.build();
         this.imageSize = imageSize;
-        this.decompositionHost = decompositionHost;
-        this.decompositionPort = decompositionPort;
+        this.noiseReductionHost = noiseReductionHost;
+        this.noiseReductionPort = noiseReductionPort;
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         faceDetector = new CascadeClassifier(cascade);
         rectangleColor = new Scalar(255, 255, 255);
     }
 
-    public Pair<Integer, Mat> analyze(byte[] payload) throws RestClientException {
+    public Pair<Integer, Mat> analyze(byte[] payload) {
         Mat image = Imgcodecs.imdecode(new MatOfByte(payload), IMREAD_GRAYSCALE);
         int width = image.cols();
         int height = image.rows();
@@ -81,22 +84,25 @@ public class DetectionServiceImpl implements DetectionService {
         return faceDetections.toArray();
     }
 
+    @SneakyThrows
     private Rect[] decompose(Mat image) {
         int width = image.cols();
         int height = image.rows();
-        List<Double> flatten = new LinkedList<>();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", "application/json");
+        String url = UriComponentsBuilder
+                .fromHttpUrl(String.format("http://%s:%s/decompose", noiseReductionHost, noiseReductionPort))
+                .queryParam("width", width)
+                .queryParam("height", height)
+                .encode()
+                .toUriString();
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(Arrays.stream(image.dump().split("\\D+")).skip(1).toArray());
+        double[][] payload = restTemplate.exchange(
+                url, HttpMethod.POST, new HttpEntity<>(json, headers), double[][].class).getBody();
         for (int i = 0; i < height; i++) {
-            for (int j = 0; j < height; j++) {
-                flatten.add(image.get(i, j)[0]);
-            }
-        }
-        String url = String.format("http://%s:%s/decompose?width=%d&height=%d",
-                decompositionHost, decompositionPort, width, height);
-        List<List<Number>> matrix = restTemplate.postForObject(url, flatten, List.class);
-        for (int i = 0; i < height; i++) {
-            List<Number> row = matrix.get(i);
             for (int j = 0; j < width; j++) {
-                image.put(i, j, row.get(j).doubleValue());
+                image.put(i, j, payload[i][j]);
             }
         }
         return detect(image);

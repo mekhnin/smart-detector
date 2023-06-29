@@ -28,11 +28,11 @@ mvn clean package
 ```
 - Вспомогательный сервис написан на R, упаковывается в docker-контейнер командой
 ```shell
-docker build -t decompose-server ./decompose-server
+docker build -t noise-reduction-server ./noise-reduction-server
 ```
-- Запуск сервиса осуществляется командой
+- Запуск приложения осуществляется командой
 ```shell
-docker run -d -e port=8081 decompose-server
+docker run -d -e port=8081 noise-reduction-server
 java -Djava.library.path=/path/to/opencv -jar target/detection-1.0.0.jar
 ```
   где `/path/to/opencv` – путь до бинарных файлов библиотеки OpenCV.

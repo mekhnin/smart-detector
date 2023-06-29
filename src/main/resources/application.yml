@@ -7,6 +7,6 @@ spring:
     multipart:
       max-file-size: 1MB
 detection-service:
-  decomposition-server:
+  noise-reduction-server:
     host: localhost
     port: 8081
