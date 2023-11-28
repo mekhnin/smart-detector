@@ -1,6 +1,6 @@
 # Smart Animal Detector
 
-Интеллектуальный сервис обнаружения животных на цифровых изображениях, в том числе зашумлённых. 
+Интеллектуальный сервис обнаружения животных на зашумлённых цифровых изображениях. 
 
 Детекция объектов реализована средствами библиотеки компьютерного зрения OpenCV,
 шумоподавление — с помощью анализа сингулярного спектра в пакете Rssa.
@@ -13,7 +13,7 @@
 
 ## Технологический стек
 
-Java 17, Spring Boot, Spring Web Services, Thymeleaf, OpenCV, R, Rssa, Plumber, jsonlite, Apache Commons IO, Apache Commons Lang, Project Lombok, SLF4J, JUnit, Mockito, Apache Maven, git, Docker.
+Java 17, JNI, Spring Boot, Spring Web Services, Thymeleaf, OpenCV, R, Rssa, Plumber, jsonlite, Apache Commons IO, Apache Commons Lang, Project Lombok, SLF4J, JUnit, Mockito, Apache Maven, Git, Docker.
 
 ## Пререквизиты
 - Для сборки требуется наличие Apache Maven и Docker.

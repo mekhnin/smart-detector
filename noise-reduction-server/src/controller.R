@@ -1,4 +1,4 @@
-#* @apiTitle decompose-server API
+#* @apiTitle noise-reduction-server API
 
 #* @param width:int
 #* @param height:int
