@@ -1,0 +1,27 @@
+[project]
+name = "my-project"
+version = "1.0.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Pavel Mekhnin", email = "mekhninpv@gmail.com"},
+]
+dependencies = [
+]
+requires-python = "==3.10.*"
+readme = "README.md"
+
+
+[tool.pdm]
+distribution = false
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pre-commit>=3.8.0",
+    "ruff>=0.5.7",
+    "-e web @ file:///${PROJECT_ROOT}/packages/web",
+    "-e backend @ file:///${PROJECT_ROOT}/packages/backend",
+    "-e ml-server @ file:///${PROJECT_ROOT}/packages/ml-server",
+]

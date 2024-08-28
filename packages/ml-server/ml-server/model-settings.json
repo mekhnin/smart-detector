@@ -1,0 +1,4 @@
+{
+    "name": "yolov10-model",
+    "implementation": "model.YOLOv10Model"
+}

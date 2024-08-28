@@ -1,0 +1,139 @@
+services:
+  web:
+    build: packages/web
+    networks:
+      - backend
+    ports:
+      - "${PORT:-8501}:8501"
+    depends_on:
+      backend:
+        condition: service_healthy
+        restart: true
+    restart: on-failure
+    healthcheck:
+      test: curl -f http://0.0.0.0:8501/healthz || exit 1
+      start_period: 0s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build: packages/backend
+    networks:
+      - backend
+      - redis
+      - rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      celery_worker:
+        condition: service_started
+    healthcheck:
+      test: curl -f http://0.0.0.0:5000/api/healthcheck/ || exit 1
+      start_period: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: on-failure
+
+  ml:
+    build: packages/ml-server
+    networks:
+      - ml
+    restart: on-failure
+    healthcheck:
+      test: curl -f http://0.0.0.0:8080/v2/health/live || exit 1
+      start_period: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  noise-reduction:
+    build: packages/noise-reduction-server
+    networks:
+      - noise-reduction
+    restart: on-failure
+    healthcheck:
+      test: curl -f http://0.0.0.0:8085/ping || exit 1
+      start_period: 0s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - rabbitmq
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - redis
+
+  celery_worker:
+    build: packages/backend
+    entrypoint: pdm run worker
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      ml:
+        condition: service_healthy
+        restart: true
+      noise-reduction:
+        condition: service_healthy
+        restart: true
+    networks:
+      - rabbitmq
+      - redis
+      - ml
+      - noise-reduction
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    networks:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./packages/ml-server/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - '9090:9090'
+    restart: unless-stopped
+    networks:
+      - prometheus
+      - ml
+
+networks:
+  backend:
+    driver: bridge
+  rabbitmq:
+    driver: bridge
+  redis:
+    driver: bridge
+  ml:
+    driver: bridge
+  noise-reduction:
+    driver: bridge
+  prometheus:
+    driver: bridge
