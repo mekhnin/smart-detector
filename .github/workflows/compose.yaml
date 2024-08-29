@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Containerization with Docker Compose
-        run: docker-compose up -d
+        run: docker compose up -d
       - name: Endpoint test
         run: |
           sleep 15
