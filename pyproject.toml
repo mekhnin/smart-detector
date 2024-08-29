@@ -1,10 +1,7 @@
 [project]
-name = "my-project"
+name = "smart-detector"
 version = "1.0.0"
-description = "Default template for PDM package"
-authors = [
-    {name = "Pavel Mekhnin", email = "mekhninpv@gmail.com"},
-]
+description = "Intelligent service for detecting animals in noisy images"
 dependencies = [
 ]
 requires-python = "==3.10.*"
