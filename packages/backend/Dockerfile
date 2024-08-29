@@ -4,6 +4,6 @@ RUN mkdir /app
 WORKDIR /app
 COPY *.toml .
 RUN pdm install
-COPY src backend
+COPY backend backend
 ENTRYPOINT ["pdm", "run", "start"]
 EXPOSE 5000/tcp
