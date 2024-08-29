@@ -1,5 +1,7 @@
 # Smart Animal Detector
 
+![Docker Compose CI](https://github.com/mekhnin/smart-detector/actions/workflows/compose.yml/badge.svg)
+
 Интеллектуальный сервис обнаружения животных на зашумлённых цифровых изображениях. 
 
 Детекция объектов реализована средствами свёрточной нейронной сети,
